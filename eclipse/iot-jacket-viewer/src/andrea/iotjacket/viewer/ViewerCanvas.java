@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import andrea.iotjacket.framework.UndecoratedScreenCanvas;
+import andrea.iotjacket.net.UDPBraodcastReader;
 import andrea.iotjacket.particle.Emitter;
 import andrea.iotjacket.particle.FireEmitter;
 import andrea.iotjacket.particle.Particle;
@@ -14,6 +15,19 @@ public class ViewerCanvas extends UndecoratedScreenCanvas {
 	private Emitter emitter = new FireEmitter();
 
 	private List<Particle> particles = new ArrayList<>();
+	
+    private UDPBraodcastReader udp;
+	private Thread t;
+	
+	private int sensorCount = 0;
+	
+	public ViewerCanvas(){
+		super();
+		
+		udp = new UDPBraodcastReader(2390,100);
+		t = new Thread(udp);
+		t.start();
+	}
 
 	@Override
 	protected void draw() {
@@ -28,8 +42,11 @@ public class ViewerCanvas extends UndecoratedScreenCanvas {
 	private void addNewParticles() {
 		int x = random(WIDTH);
 		int y = random(HEIGHT);
-
-		particles.addAll(emitter.emit(x, y));
+		sensorCount++;
+		if(sensorCount>100) sensorCount=0;
+		int sensorIndex = sensorCount % 6;
+        int size = udp.getSensorValue(sensorIndex);
+		particles.addAll(emitter.emit(x, y, size));
 	}
 
 	private void renderAllParticles() {

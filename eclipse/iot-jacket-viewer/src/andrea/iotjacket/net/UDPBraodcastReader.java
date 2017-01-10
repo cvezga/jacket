@@ -15,7 +15,7 @@ public class UDPBraodcastReader implements Runnable {
     private String ip;
 	private int port;
 	private int messageSize;
-	
+    private int[] sensors = new int[6];	
 	
 	public UDPBraodcastReader(int port, int messageSize) {
 		super();
@@ -63,17 +63,36 @@ public class UDPBraodcastReader implements Runnable {
 	
 	public static void main(String[] args) {
 		UDPBraodcastReader udp = new UDPBraodcastReader(2390,100);
-		
+		new Thread(udp).start();
 		
 		while(true){
-		System.out.println(udp.receiveData());
+			for(int i=0; i<6; i++){
+			  System.out.print(udp.getSensorValue(i)+", ");	
+			}
+			System.out.println();
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
+		
+		
 	}
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		
+		while(true){
+			String data = receiveData();
+			String[] values = data.split(",");
+			for(int i=0; i<6; i++){
+			  this.sensors[i] = Integer.parseInt(values[i]);
+			}
+		}
 	}
 
+	public int getSensorValue(int index){
+		return this.sensors[index];
+	}
 }

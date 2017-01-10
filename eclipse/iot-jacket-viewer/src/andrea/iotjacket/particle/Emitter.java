@@ -4,5 +4,5 @@ import java.util.List;
 
 public  interface Emitter {
 
-	 List<Particle> emit(double x, double y);
+	 List<Particle> emit(double x, double y, double size);
 }
