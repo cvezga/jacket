@@ -1,84 +1,52 @@
-#include <SPI.h>
+//#include <SPI.h>
 #include <WiFi101.h>
 #include <WiFiUdp.h>
 
-boolean outputToSerial = false;
-char ssid[] = "dd-wrt_vap"; //  your network SSID (name)
-char pass[] = "mmepcbgad27f";    // your network password (use for WPA, or use as key for WEP)
-unsigned int localPort = 2390;      // local port to listen on
-IPAddress broadcastIp(192, 168, 1, 255);
+//WiFi values for Home CR
+char ssid[] = "dd-wrt_vap";              //  your network SSID (name)
+char pass[] = "mmepcbgad27f";            // your network password (use for WPA, or use as key for WEP)
+IPAddress broadcastIp(192, 168, 1, 255); //net ip address
+unsigned int localPort = 2390;           // local port to listen on
 
+//WiFi values for University Vienna
+//char ssid[] = "dd-wrt_vap";              //  your network SSID (name)
+//char pass[] = "mmepcbgad27f";            // your network password (use for WPA, or use as key for WEP)
+//IPAddress broadcastIp(10, 168, 1, 255); //net ip address
+//unsigned int localPort = 2390;           // local port to listen on
 
-int status = WL_IDLE_STATUS;
-int keyIndex = 0;       // your network key Index number (needed only for WEP)
-
-
-char packetBuffer[255]; //buffer to hold incoming packet
-char  ReplyBuffer[30];       // a string to send back
-
-WiFiUDP Udp;
-
+boolean outputToSerial = false; //switch to send messages to serial console; no serial output will be done if value is set to false
+const int delayValue   = 100;   // loop wait value
 
 // these constants won't change:
-const int ledPin = 6;   // led connected to digital pin 6 (MKR1000)
-int ledCount = 0;
+const int ledPin = 6;    // on baord LED connected to digital pin 6 (MKR1000)
+int ledState     = LOW;  // variable used to store the last LED status, to toggle the light
+int ledCount     = 0;    // counter to control LED ON/OFF speed
 
-//Piezo Sensors
-const int sensor1 = A1; // the piezo is connected to analog pin A1
-const int sensor2 = A2; // the piezo is connected to analog pin A2
-const int sensor3 = A3; // the piezo is connected to analog pin A3
-const int sensor4 = A4; // the piezo is connected to analog pin A4
-const int sensor5 = A5; // the piezo is connected to analog pin A5
-const int sensor6 = A6; // the piezo is connected to analog pin A6
+//sensors values
+int sensorReading1 = 0;      // variable to store the value read from the sensor pin1 
+int sensorReading2 = 0;      // variable to store the value read from the sensor pin2
+int sensorReading3 = 0;      // variable to store the value read from the sensor pin3
+int sensorReading4 = 0;      // variable to store the value read from the sensor pin4
+int sensorReading5 = 0;      // variable to store the value read from the sensor pin5
+int sensorReading6 = 0;      // variable to store the value read from the sensor pin6
 
-const int threshold = 100;  // threshold value to decide when the detected sound is a knock or not
-const int delayValue = 100;  // loop wait value
-
-
-// these variables will change:
-int sensorReading1 = 0;      // variable to store the value read from the sensor pin
-int sensorReading2 = 0;      // variable to store the value read from the sensor pin
-int sensorReading3 = 0;      // variable to store the value read from the sensor pin
-int sensorReading4 = 0;      // variable to store the value read from the sensor pin
-int sensorReading5 = 0;      // variable to store the value read from the sensor pin
-int sensorReading6 = 0;      // variable to store the value read from the sensor pin
-
-String s1 = "00000";
-String s2 = "00000";
-String s3 = "00000";
-String s4 = "00000";
-String s5 = "00000";
-String s6 = "00000";
-
+//all sensor values as string
 String data = "00000,00000,00000,00000,00000,00000;";
-
-int ledState = LOW;         // variable used to store the last LED status, to toggle the light
-
-
+char  ReplyBuffer[30];       // buffer to send data to wifi
+WiFiUDP Udp;
 
 void setup() {
-
- if(outputToSerial){
-  initSerial();
-  Serial.println("Jacket Sensors - Ver. 1.0");
- }
-  
   pinMode(ledPin, OUTPUT); // declare the ledPin as as OUTPUT
-
+  initSerial();
   checkWiFiShield();
-
   connectToWiFi();
-
-  if(outputToSerial) Serial.println("\nStarting connection to server...");
-  
-  // if you get a connection, report back via serial:
   Udp.begin(localPort);
 }
 
 void loop() {
 
   readSensors();
-  if(outputToSerial) printSensorValuesToSerial();
+  printSensorValuesToSerial();
   toggleLedState();
   prepareBufferData();
   sendData();    
@@ -87,6 +55,7 @@ void loop() {
 
 }
 
+//Serial communitacion will only be initialiced if outputToSerial = true
 void  initSerial(){
   if(outputToSerial){
     //Initialize serial and wait for port to open:
@@ -94,6 +63,7 @@ void  initSerial(){
     while (!Serial) {
       ; // wait for serial port to connect. Needed for native USB port only
     }
+    Serial.println("Jacket Sensors - Ver. 1.0");
   }
 }
 
@@ -107,20 +77,22 @@ void  checkWiFiShield(){
 }
 
 void connectToWiFi(){
-
+  int status = WL_IDLE_STATUS;
   // attempt to connect to Wifi network:
   while (status != WL_CONNECTED) {
-    if(outputToSerial) Serial.print("Attempting to connect to SSID: ");
-    if(outputToSerial) Serial.println(ssid);
+    if(outputToSerial){
+      Serial.print("Attempting to connect to SSID: ");
+      Serial.println(ssid);
+    }
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
     status = WiFi.begin(ssid,pass);
-
-    // wait 10 seconds for connection:
-    delay(10000);
+    // wait 5 seconds for connection:
+    delay(5000);
   }
-  if(outputToSerial) Serial.println("Connected to wifi");
-  if(outputToSerial) printWifiStatus();
-
+  if(outputToSerial){
+     Serial.println("Connected to wifi");
+     printWifiStatus();
+  }
 }
 
 void printWifiStatus() {
@@ -143,12 +115,12 @@ void printWifiStatus() {
 }
 
 void readSensors() {
-  sensorReading1 = analogRead(sensor1);
-  sensorReading2 = analogRead(sensor2);
-  sensorReading3 = analogRead(sensor3);
-  sensorReading4 = analogRead(sensor4);
-  sensorReading5 = analogRead(sensor5);
-  sensorReading6 = analogRead(sensor6);
+  sensorReading1 = analogRead(A1);
+  sensorReading2 = analogRead(A2);
+  sensorReading3 = analogRead(A3);
+  sensorReading4 = analogRead(A4);
+  sensorReading5 = analogRead(A5);
+  sensorReading6 = analogRead(A6);
 }
 
 void  printSensorValuesToSerial(){
@@ -172,6 +144,7 @@ void  toggleLedState(){
     ledCount = ledCount + 1;
 
     if(ledCount > 10){
+      //init ledCount back to zero
       ledCount=0;
       //change led state
       ledState = !ledState;
@@ -184,22 +157,18 @@ void  toggleLedState(){
  void prepareBufferData(){
 
     //Prepare string to send to wifi
-    s1 =  String(sensorReading1);
-    s2 =  String(sensorReading2);
-    s3 =  String(sensorReading3);
-    s4 =  String(sensorReading4);
-    s5 =  String(sensorReading5);
-    s6 =  String(sensorReading6);
-
-    data = s1+","+s2+","+s3+","+s4+","+s5+","+s6+";";
-
-    if(outputToSerial) Serial.println("Sending to WiFi: "+data);
-    
-    data.toCharArray(ReplyBuffer, data.length()+1);
-
+    data = String(sensorReading1)+","
+          +String(sensorReading1)+","
+          +String(sensorReading1)+","
+          +String(sensorReading1)+","
+          +String(sensorReading1)+","
+          +String(sensorReading1)+";";
  }
 
  void sendData(){ 
+    if(outputToSerial) Serial.println("Sending to WiFi: "+data);
+    data.toCharArray(ReplyBuffer, data.length()+1);
+    
     Udp.beginPacket(broadcastIp, localPort);
     Udp.write(ReplyBuffer);
     Udp.endPacket();
