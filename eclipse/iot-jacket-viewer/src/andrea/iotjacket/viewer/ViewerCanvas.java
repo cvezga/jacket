@@ -43,7 +43,9 @@ public class ViewerCanvas extends UndecoratedScreenCanvas {
 		int x = random(WIDTH);
 		int y = random(HEIGHT);
 		int size = getSensorValue();
+		if(particles.size()<250){
 		particles.addAll(emitter.emit(x, y, size));
+		}
 	}
 	
 	private int getSensorValue(){
