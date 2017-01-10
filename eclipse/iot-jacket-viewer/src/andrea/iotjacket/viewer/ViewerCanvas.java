@@ -42,11 +42,15 @@ public class ViewerCanvas extends UndecoratedScreenCanvas {
 	private void addNewParticles() {
 		int x = random(WIDTH);
 		int y = random(HEIGHT);
+		int size = getSensorValue();
+		particles.addAll(emitter.emit(x, y, size));
+	}
+	
+	private int getSensorValue(){
 		sensorCount++;
 		if(sensorCount>100) sensorCount=0;
 		int sensorIndex = sensorCount % 6;
-        int size = udp.getSensorValue(sensorIndex);
-		particles.addAll(emitter.emit(x, y, size));
+		return udp.getSensorValue(sensorIndex);
 	}
 
 	private void renderAllParticles() {
