@@ -63,7 +63,7 @@ void  initSerial(){
     while (!Serial) {
       ; // wait for serial port to connect. Needed for native USB port only
     }
-    Serial.println("Jacket Sensors - Ver. 1.0");
+    Serial.println("Jacket Sensors - Ver. 1.0.1");
   }
 }
 
@@ -158,11 +158,11 @@ void  toggleLedState(){
 
     //Prepare string to send to wifi
     data = String(sensorReading1)+","
-          +String(sensorReading1)+","
-          +String(sensorReading1)+","
-          +String(sensorReading1)+","
-          +String(sensorReading1)+","
-          +String(sensorReading1)+";";
+          +String(sensorReading2)+","
+          +String(sensorReading3)+","
+          +String(sensorReading4)+","
+          +String(sensorReading5)+","
+          +String(sensorReading6)+";";
  }
 
  void sendData(){ 
